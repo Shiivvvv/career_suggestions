@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Career Suggestions</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="decoration decoration-1"></div>
+    <div class="decoration decoration-2"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Your Career Suggestions</h1>
+            <p>Personalized career paths based on your profile</p>
+        </header>
+
+        <div id="content-area">
+            <div class="student-info" id="student-info" style="display:none;"></div>
+            <div class="message-box" id="message-box" style="display:none;"></div>
+            <div class="results" id="results"></div>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← Back to Home</a>
+        </div>
+
+        <footer>
+            <p> Made with 💜 for Students | Find Your Path</p>
+        </footer>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const stream = params.get('stream');
+        const percentage = parseFloat(params.get('percentage'));
+
+        // Format stream name for display
+        function formatStream(str) {
+            return str.replace(/_/g, ' - ').replace('Science - ', 'Science ');
+        }
+
+        // Determine tier based on percentage
+        function getTier(pct) {
+            if (pct >= 85) return 'high';
+            if (pct >= 60) return 'mid';
+            return 'low';
+        }
+
+        // Display student info
+        const studentInfo = document.getElementById('student-info');
+        const messageBox = document.getElementById('message-box');
+        const resultsDiv = document.getElementById('results');
+
+        if (!stream || isNaN(percentage)) {
+            messageBox.style.display = 'block';
+            messageBox.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))';
+            messageBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            messageBox.style.color = '#fca5a5';
+            messageBox.innerHTML = '<p>⚠️ Please submit the form on the homepage.</p>';
+        } else {
+            // Show student info
+            studentInfo.style.display = 'block';
+            studentInfo.innerHTML = `
+                <p><strong>Stream:</strong> ${formatStream(stream)}</p>
+                <p><strong>Percentage:</strong> ${percentage}%</p>
+            `;
+
+            // Fetch JSON data
+            fetch('careers.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load career data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const tier = getTier(percentage);
+                    
+                    if (data[stream] && data[stream][tier]) {
+                        const careerData = data[stream][tier];
+                        
+                        // Show message
+                        messageBox.style.display = 'block';
+                        messageBox.innerHTML = `<p>${careerData.message}</p>`;
+                        
+                        // Show career cards
+                        careerData.careers.forEach(career => {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.innerHTML = `
+                                <h3>${career.title}</h3>
+                                <p><strong>About:</strong> ${career.desc}</p>
+                                <p class="colleges"><strong>Famous Colleges:</strong> ${career.colleges}</p>
+                            `;
+                            resultsDiv.appendChild(card);
+                        });
+                    } else {
+                        messageBox.style.display = 'block';
+                        messageBox.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))';
+                        messageBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                        messageBox.style.color = '#fca5a5';
+                        messageBox.innerHTML = '<p>⚠️ No career suggestions found for your selection. Please try again.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading JSON:', error);
+                    messageBox.style.display = 'block';
+                    messageBox.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))';
+                    messageBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                    messageBox.style.color = '#fca5a5';
+                    messageBox.innerHTML = '<p>⚠️ Error loading career data. Please make sure careers.json file exists.</p>';
+                });
+        }
+    </script>
+</body>
+</html>
+
